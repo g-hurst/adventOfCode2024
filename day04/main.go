@@ -60,26 +60,23 @@ func part_1(data string) int {
 
     }
 
+    check := func(strs [][]rune) {
+        for _, str := range strs{
+            sum += count_str(string(str), "XMAS")
+        }
+
+    }
+
     // check the columns
-    for _, col:= range columns {
-        str := string(col)
-        sum += count_str(str, "XMAS")
-    }
-
-    // check the neg slope diagonals (top_left->bottom_right)
-    for _, diag := range diags_neg {
-
-        str := string(diag)
-        sum += count_str(str, "XMAS")
-    }
-
-    // check the pos slope diagonals (top_right->bottom_left)
-    for _, diag := range diags_pos {
-        str := string(diag)
-        sum += count_str(str, "XMAS")
-    }
+    check(columns)
+    check(diags_neg)
+    check(diags_pos)
 
     return sum
+}
+
+func part_2(data string) int {
+    return 0
 }
 
 
@@ -98,16 +95,16 @@ func main() {
     sol_part1 := part_1(data)
     fmt.Printf("part1: %d\n", sol_part1)
 
-    // // check part2 example
-    // example_sol_part2 := part_2(ex_data)
-    // example_ans_part2 := 48
-    // if example_sol_part2 !=example_ans_part2 {
-    //     fmt.Printf("%d != %d\n", example_sol_part2, example_ans_part2)
-    //     panic("example solution and answer must be equal")
-    // }
-    // // get the answer to part2
-    // sol_part2 := part_2(data)
-    // fmt.Printf("part2: %d\n", sol_part2)
+    // check part2 example
+    example_sol_part2 := part_2(ex_data)
+    example_ans_part2 := 9
+    if example_sol_part2 !=example_ans_part2 {
+        fmt.Printf("%d != %d\n", example_sol_part2, example_ans_part2)
+        panic("example solution and answer must be equal")
+    }
+    // get the answer to part2
+    sol_part2 := part_2(data)
+    fmt.Printf("part2: %d\n", sol_part2)
 
 }
 
