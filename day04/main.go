@@ -138,7 +138,6 @@ func main() {
         panic("example solution and answer must be equal")
     }
     // get the answer to part2
-    // 1825 too high
     sol_part2 := part_2(data)
     fmt.Printf("part2: %d\n", sol_part2)
 
