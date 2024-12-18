@@ -24,16 +24,18 @@ func get_input(f_name string) string {
     return string(data)
 }
 
+
 func part_1(data string) int {
     grid := strings.Split(strings.TrimSpace(data), "\n")
 
-    // get the guard and obstacle locations
+    // make a hashmap with all the obstacles
+    // and find the guard 
     var guard Guard
-    var obstacles []Point
+    obstacles := make(map[Point]bool)
     for y, row := range grid {
         for x, val := range row {
             if val == '#' {
-                obstacles = append(obstacles, Point{x, y})
+                obstacles[Point{x, y}] = true
             } else if val == '^' {
                 guard = Guard{Point{x,y}, 'N'}
             }
@@ -56,32 +58,23 @@ func part_1(data string) int {
             case 'W': new_loc= Point{guard.loc.x - 1,guard.loc.y}
         }
 
-        // check if the new point is out of bounds
         if ((new_loc.x < 0) || (new_loc.x >= len(grid[0])) ||
             (new_loc.y < 0) || (new_loc.y >= len(grid))) {
+            // check if the new point is out of bounds
             is_end = true
-        } else {
-            // check if the new point is on an obstacle
-            is_collision := false
-            for _, obs := range obstacles {
-                if new_loc == obs {
-                    is_collision = true
-                    break
-                }
-            }
-            // turn on a collision or log the point as seen
-            if is_collision {
-                switch guard.dir {
-                    case 'N': guard.dir = 'E'
-                    case 'S': guard.dir = 'W' 
-                    case 'E': guard.dir = 'S' 
-                    case 'W': guard.dir = 'N' 
+        } else if obstacles[new_loc] {
+            // turn on a collision 
+            switch guard.dir {
+                case 'N': guard.dir = 'E'
+                case 'S': guard.dir = 'W' 
+                case 'E': guard.dir = 'S' 
+                case 'W': guard.dir = 'N' 
 
-                }
-            } else {
-                guard_path[new_loc] = true
-                guard.loc = new_loc
             }
+        } else {
+            // log the point as seen
+            guard_path[new_loc] = true
+            guard.loc = new_loc
         }
     }
 
