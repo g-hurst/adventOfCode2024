@@ -27,13 +27,13 @@ func get_input(f_name string) string {
 func part_1(data string) int {
     grid := strings.Split(strings.TrimSpace(data), "\n")
 
-    // make a hashmap with all the obstacles
+    // get the guard and obstacle locations
     var guard Guard
-    obstacles := make(map[Point]bool)
+    var obstacles []Point
     for y, row := range grid {
         for x, val := range row {
             if val == '#' {
-                obstacles[Point{x, y}] = true
+                obstacles = append(obstacles, Point{x, y})
             } else if val == '^' {
                 guard = Guard{Point{x,y}, 'N'}
             }
@@ -63,7 +63,7 @@ func part_1(data string) int {
         } else {
             // check if the new point is on an obstacle
             is_collision := false
-            for obs, _ := range obstacles {
+            for _, obs := range obstacles {
                 if new_loc == obs {
                     is_collision = true
                     break
@@ -87,6 +87,7 @@ func part_1(data string) int {
 
     return len(guard_path)
 }
+
 
 func main() {
     data    := get_input("input.txt")
