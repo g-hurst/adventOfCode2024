@@ -4,6 +4,8 @@ import (
     "fmt"
     "os"
     "strings"
+    "reflect"
+    "slices"
 )
 
 
@@ -42,27 +44,22 @@ func part_1(data string) int {
             }
             seen_point[Duo{x,y}] = true
 
-            area      := 1
+            area := 1
             perimeter := 0
-            dirs := Duo{-1,1}
-            for _, d := range dirs {
-                // check points in y direction
-                if is_valid(x, y+d) && (grid[y+d][x]==grid[y][x]) {
-                    ap        := _calc(x, y+d)
-                    area      += ap[0]
-                    perimeter += ap[1]
-                } else {
-                    perimeter += 1
-                }
-                // check points in x direction
-                if is_valid(x+d, y) && (grid[y][x+d]==grid[y][x]) {
-                    ap        := _calc(x+d, y)
+            __update := func (x_next, y_next int) {
+                if is_valid(x_next, y_next) && (grid[y_next][x_next]==grid[y][x]) {
+                    ap := _calc(x_next, y_next)
                     area      += ap[0]
                     perimeter += ap[1]
                 } else {
                     perimeter += 1
                 }
             }
+            __update(x+1, y)
+            __update(x-1, y)
+            __update(x,   y-1)
+            __update(x,   y+1)
+
             return Duo{area, perimeter}
         }
         ap := _calc(x, y)
@@ -84,6 +81,12 @@ func part_1(data string) int {
 }
 
 func part_2(data string) int {
+    const (
+        NORTH = 0
+        EAST  = 1
+        SOUTH = 2
+        WEST  = 3
+    )
     type Duo [2]int
     grid := strings.Split(strings.TrimSpace(data), "\n")
     seen_point := make(map[Duo]bool)
@@ -92,38 +95,67 @@ func part_2(data string) int {
         return (x>=0 && x<len(grid[0])) && (y>=0 && y < len(grid))
     }
     calc_plot := func (x, y int) *Plot{
-        var _calc func (x, y int) Duo
-        _calc = func (x, y int) Duo {
+        perim_points := make(map[int][]Duo)
+
+        // funciton to calculate the area and log all perimiter points
+        var _calc func (x, y int) int
+        _calc = func (x, y int) int {
+            // recursive end
             if seen_point[Duo{x,y}] {
-                return Duo{0, 0}
+                return 0
             }
             seen_point[Duo{x,y}] = true
-
-            area      := 1
-            perimeter := 0
-            dirs := Duo{-1,1}
-            for _, d := range dirs {
-                // check points in y direction
-                if is_valid(x, y+d) && (grid[y+d][x]==grid[y][x]) {
-                    ap        := _calc(x, y+d)
-                    area      += ap[0]
-                    perimeter += ap[1]
+            // get area
+            area := 1
+            __update := func (x_next, y_next , perim_loc int) {
+                if is_valid(x_next, y_next) && (grid[y_next][x_next]==grid[y][x]) {
+                    area += _calc(x_next, y_next)
                 } else {
-                    perimeter += 1
-                }
-                // check points in x direction
-                if is_valid(x+d, y) && (grid[y][x+d]==grid[y][x]) {
-                    ap        := _calc(x+d, y)
-                    area      += ap[0]
-                    perimeter += ap[1]
-                } else {
-                    perimeter += 1
+                    // log when a perimiter point is found
+                    perim_points[perim_loc] = append(perim_points[perim_loc] ,Duo{x,y})
                 }
             }
-            return Duo{area, perimeter}
+            __update(x+1, y,   EAST)
+            __update(x-1, y,   WEST)
+            __update(x,   y-1, NORTH)
+            __update(x,   y+1, SOUTH)
+            return area
         }
-        ap := _calc(x, y)
-        return &Plot{area:ap[0], perimeter:ap[1], plant_type:rune(grid[y][x])}
+
+        area := _calc(x, y)
+        perimeter := 0
+        // loop over each direction 
+        for len(perim_points) > 0 {
+            dir := reflect.ValueOf(perim_points).MapKeys()[0].Interface().(int)
+            seen_perim := make(map[Duo]bool)
+            // look at the points in the direction
+            for _,point := range perim_points[dir] {
+                if !seen_perim[point] {
+                    perimeter += 1
+                    queue := []Duo{point}
+                    // make a queue to check new dirs
+                    for len(queue) > 0 {
+                        pt := queue[0]
+                        queue = queue[1:]
+                        if !seen_perim[pt] {
+                            seen_perim[pt] = true
+                            // add each adjacent point if in same direction
+                            for _, adj_pt := range []Duo{Duo{pt[0]+1,pt[1]},
+                                                         Duo{pt[0],  pt[1]-1},
+                                                         Duo{pt[0]-1,pt[1]},
+                                                         Duo{pt[0],  pt[1]+1}} {
+                                if slices.Contains(perim_points[dir], adj_pt) {
+                                    queue = append(queue, adj_pt)
+                                }
+                             }
+                        }
+                    }
+                }
+            }
+            delete(perim_points, dir)
+        }
+
+        return &Plot{area:area, perimeter:perimeter, plant_type:rune(grid[y][x])}
     }
 
     // calculate the area and perimeter for each square
@@ -132,11 +164,6 @@ func part_2(data string) int {
         for x, _ := range row {
             if !seen_point[Duo{x,y}] {
                 plot := calc_plot(x,y)
-                fmt.Printf("%v| %v %v -> %v \n",
-                                string(plot.plant_type),
-                                plot.area,
-                                plot.perimeter,
-                                plot.get_price())
                 total_price += plot.get_price()
             }
         }
